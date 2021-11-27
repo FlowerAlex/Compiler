@@ -6,7 +6,7 @@ import token.TokenType
 import java.lang.Exception
 import kotlin.math.pow
 
-class Scanner(private val reader: Reader) : IScanner { // Refactor code add more methods!!!!!!!!!!!!!!!!!
+class Scanner(private val reader: Reader) : IScanner {
     companion object{
         val SymbolicTokens = mapOf(
             "," to TokenType.COMMA,
@@ -53,29 +53,109 @@ class Scanner(private val reader: Reader) : IScanner { // Refactor code add more
             currentChar = reader.getNextChar()
         }
 
-        while (reader.currentChar == '/'.code){
-            if(reader.peekNextChar() == '/'.code){
-                currentChar = reader.skipCommentsAndGetNextChar()
-                while (isWhiteSpaceOrNextLine(currentChar,reader.peekNextChar())){
-                    currentChar = reader.getNextChar()
-                }
-            }else{
-                return Token(TokenType.DIVIDE,currentChar.toChar(), Pair(reader.currentLine,reader.currentIndexInLine))
-            }
-        }
+        var res = recognizeCommentOrDivide(currentChar)
+
+        if(res != null) return res
+        currentChar = reader.currentChar!!
+
+        val pos = Pair(reader.currentLine,reader.currentIndexInLine)
 
         if(currentChar == -1){
-            return Token(TokenType.EOF,null,Pair(reader.currentLine,reader.currentIndexInLine))
+            return Token(TokenType.EOF,null, pos)
         }
 
         val currentToken = StringBuilder()
 
+        res = recognizeString(currentChar,currentToken,pos)
+        if(res != null) return res
+
+        res = recognizeIntOrDouble(currentChar,pos)
+        if(res != null) return res
+
+        currentToken.append(currentChar.toChar())
+
+        res = recognizeSymbolicToken(currentToken, pos)
+        if(res != null) return res
+
+        while (isLetter(reader.peekNextChar()) || isDigit(reader.peekNextChar())){
+            currentToken.append(reader.getNextChar().toChar())
+        }
+
+        res = recognizeKeywordToken(currentToken, pos)
+        if(res != null) return res
+
+        res = recognizeIdentifierToken(currentToken, pos)
+        if(res != null) return res
+
+        return Token(TokenType.UNKNOWN, currentToken.toString(),pos)
+    }
+
+    private fun recognizeIdentifierToken(currentToken: StringBuilder, pos: Pair<Int, Int>): Token? {
+        if(isLetter(currentToken[0].code) ){
+            return Token(TokenType.IDENTIFIER,currentToken.toString(),pos)
+        }
+        return null
+    }
+
+    private fun recognizeKeywordToken(currentToken: StringBuilder, pos: Pair<Int, Int>): Token? {
+        val tokenType = KeywordTokens[currentToken.toString()]
+        if(tokenType != null){
+            return Token(tokenType, currentToken.toString(),pos)
+        }
+        return null
+    }
+
+    private fun recognizeSymbolicToken(currentToken: StringBuilder,pos: Pair<Int, Int>): Token? {
+        var nextChar = reader.peekNextChar().toChar()
+        var tokenType = SymbolicTokens[currentToken.toString() + nextChar]
+        if(tokenType != null){
+            reader.getNextChar()
+            return Token(tokenType, currentToken.toString() + nextChar,pos)
+        }
+
+        tokenType = SymbolicTokens[currentToken.toString()]
+        if(tokenType != null){
+            return Token(tokenType, currentToken.toString(),pos)
+        }
+        return null
+    }
+
+    private fun recognizeIntOrDouble(currentChar: Int,pos:Pair<Int,Int>): Token?{
+        var currentChar = currentChar
+        if(isDigit(currentChar)){
+            var res = currentChar -'0'.code
+            if(currentChar != '0'.code){
+                while(isDigit(reader.peekNextChar())){
+                    currentChar = reader.getNextChar()
+                    res = 10*res + (currentChar -'0'.code)
+                }
+            }
+
+            return if(reader.peekNextChar() == '.'.code){
+                reader.getNextChar()
+
+                if(isDigit(reader.peekNextChar())){
+                    var partRes = 0
+                    var countOfDigits = 0
+                    while (isDigit(reader.peekNextChar())){
+                        partRes += partRes * 10 + (reader.getNextChar() - '0'.code)
+                        countOfDigits++
+                    }
+                    Token(TokenType.VALUE_DOUBLE,res.toDouble() + (partRes.toDouble()/ (10.0.pow(countOfDigits.toDouble()))) , pos)
+                }else throw Exception("After '.' should be at least 1 digit")
+            }else{
+                Token(TokenType.VALUE_INT,res, pos)
+            }
+        }
+        return null
+    }
+
+    private fun recognizeString(currentChar: Int, currentToken:StringBuilder,pos:Pair<Int,Int>): Token?{
         if(currentChar == '"'.code){
             var nextCh = reader.getEveryNextChar()
             while (nextCh != '"'.code){
                 if(nextCh == '\\'.code){
-                    val nextNextCh = reader.peekNextChar()
-                    when (nextNextCh) {
+                    when (reader.peekNextChar()) {
                         '\\'.code -> {
                             currentToken.append('\\')
                             reader.getNextChar()
@@ -101,7 +181,7 @@ class Scanner(private val reader: Reader) : IScanner { // Refactor code add more
                             reader.getNextChar()
                         }
                         else -> {
-                            throw Exception("Invalid string value, ${Pair(reader.currentLine,reader.currentIndexInLine).toString()}")
+                            throw Exception("Invalid string value, $pos")
                         }
                     }
 
@@ -115,65 +195,22 @@ class Scanner(private val reader: Reader) : IScanner { // Refactor code add more
             }
             return Token(TokenType.TEXT,currentToken.toString(),Pair(reader.currentLine,reader.currentIndexInLine))
         }
-        val pos = Pair(reader.currentLine,reader.currentIndexInLine)
+        return null
+    }
 
-        currentToken.append(currentChar.toChar())
-
-        if(isDigit(currentChar)){
-            var res = currentChar -'0'.code
-            if(currentChar != '0'.code){
-                while(isDigit(reader.peekNextChar())){
+    private fun recognizeCommentOrDivide(currentChar: Int):Token? {
+        var currentChar = currentChar
+        while (reader.currentChar == '/'.code){
+            if(reader.peekNextChar() == '/'.code){
+                currentChar = reader.skipCommentsAndGetNextChar()
+                while (isWhiteSpaceOrNextLine(currentChar,reader.peekNextChar())){
                     currentChar = reader.getNextChar()
-                    res = 10*res + (currentChar -'0'.code)
-                }
-            }
-
-            if(reader.peekNextChar() == '.'.code){
-                reader.getNextChar()
-
-                if(isDigit(reader.peekNextChar())){
-                    var partRes = 0
-                    var countOfDigits = 0
-                    while (isDigit(reader.peekNextChar())){
-                        partRes += partRes * 10 + (reader.getNextChar() - '0'.code)
-                        countOfDigits++
-                    }
-                    return Token(TokenType.VALUE_DOUBLE,res.toDouble() + (partRes.toDouble()/ (10.0.pow(countOfDigits.toDouble()))) , pos)
                 }
             }else{
-                return Token(TokenType.VALUE_INT,res, pos)
+                return Token(TokenType.DIVIDE,currentChar.toChar(), Pair(reader.currentLine,reader.currentIndexInLine))
             }
         }
-
-        // symbolic token with 2 chars
-        var nextChar = reader.peekNextChar().toChar()
-        var tokenType = SymbolicTokens[currentToken.toString() + nextChar]
-        if(tokenType != null){
-            reader.getNextChar()
-            return Token(tokenType, currentToken.toString() + nextChar,pos)
-        }
-
-        // symbolic token with 1 char
-        tokenType = SymbolicTokens[currentToken.toString()]
-        if(tokenType != null){
-            return Token(tokenType, currentToken.toString(),pos)
-        }
-
-        while (isLetter(reader.peekNextChar()) || isDigit(reader.peekNextChar())){
-            currentToken.append(reader.getNextChar().toChar())
-        }
-
-        // keyword tokens
-        tokenType = KeywordTokens[currentToken.toString()]
-        if(tokenType != null){
-            return Token(tokenType, currentToken.toString(),pos)
-        }
-
-        if(isLetter(currentToken[0].code) ){
-           return Token(TokenType.IDENTIFIER,currentToken.toString(),pos)
-        }
-
-        return Token(TokenType.UNKNOWN, currentToken.toString(),pos)
+        return null
     }
 
     private fun isWhiteSpaceOrNextLine(ch: Int, nextCh: Int): Boolean{
@@ -182,9 +219,11 @@ class Scanner(private val reader: Reader) : IScanner { // Refactor code add more
                 (ch == '\r'.code && nextCh == '\n'.code) ||
                 (ch == '\r'.code) || (ch == '\n'.code)
     }
+
     private fun isLetter(ch: Int): Boolean{
         return Char(ch).isLetter()
     }
+
     private fun isDigit(ch: Int): Boolean{
         return (ch >= '0'.code && ch <= '9'.code)
     }

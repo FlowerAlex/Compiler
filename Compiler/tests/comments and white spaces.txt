@@ -1,0 +1,9 @@
+
+print("Line 2");
+// comment
+print("Line 4"); // comment
+
+print("Line 6");
+
+//  comment
+print("Line 9");
