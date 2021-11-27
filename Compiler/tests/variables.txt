@@ -1,0 +1,10 @@
+int a1 = 5;
+double b1 = 10.0;
+bool c1 = True;
+bool c2 = False;
+
+int a2;
+double b2;
+bool c3;
+
+b1 = a1;

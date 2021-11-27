@@ -1,0 +1,119 @@
+Program 
+    : { Function } { (Instruction ';') | Statement } 
+    ; 
+
+Function 
+    : 'fun' functionName  '(' [ ArgsDefList ] ')' [ ':' Type ] Block 
+    ; 
+
+ArgsDefList 
+    : argName ';' Type { ',' argName ';' Type }
+    ; 
+
+Block 
+    : '{' { Instruction ';' | Statement } '}' 
+    ; 
+
+Instruction 
+    : VariableDeclaration 
+    | VariableAssignment 
+    | FunctionCall 
+    | Return 
+    ; 
+
+Statement 
+    : 'if' '(' Expression ')' Block [ 'else' Block ]
+    | 'while' '(' Expression ')' Block 
+    ; 
+
+Expression 
+    : LogicalExpression 
+    ; 
+
+LogicalExpression 
+    : NegativeExpression [ LogicalOperator LogicalExpression ]
+    ; 
+
+LogicalOperator 
+    : '&&' 
+    | '||' 
+    ; 
+    
+
+NegativeExpression 
+    : ['!'] RelationalExpression 
+    ; 
+
+RelationalExpression 
+    : AddSubExpression RelationalOperator RelationalExpression 
+    ; 
+
+RelationalOperator 
+    : '==' 
+    | '!=' 
+    | '<' 
+    | '>' 
+    | '>=' 
+    | '<=' 
+    ; 
+
+AddSubExpression 
+    : MulDivExpression AddSubOperator AddSubExpression 
+    ; 
+
+AddSubOperator 
+    : '+' 
+    | '-' 
+    ; 
+
+MulDivExpression 
+    : UnaryExpression [ MulDivOperator MulDivExpression ]
+    ;  
+
+MulDivOperator 
+    : '*' 
+    | '/' 
+    ; 
+
+UnaryExpression 
+    : ['-'] PrimaryExpression 
+    ; 
+
+PrimaryExpression 
+    : int  
+    | double  
+    | bool 
+    | '(' Expression ')'  
+    | FunctionCall 
+    | variableName
+    ; 
+
+VariableDeclaration 
+    : Type variableName 
+    | Type VariableAssignment 
+    ; 
+
+VariableAssignment 
+    : variableName '=' Expression 
+    ; 
+
+FunctionCall 
+    : functionName '(' [ ArgsList ] ')' 
+    ; 
+
+ArgsList 
+    : ArgsList ',' variableName 
+    | ArgsList ',' PrimaryExpression 
+    | variableName 
+    | PrimaryExpression 
+    ; 
+
+Return 
+    : 'return' Expression
+    ; 
+
+Type 
+    : 'int' 
+    | 'double' 
+    | 'bool' 
+    ; 

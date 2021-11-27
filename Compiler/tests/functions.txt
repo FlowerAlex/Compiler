@@ -1,0 +1,17 @@
+fun emptyFunction() {}
+
+fun withoutArguments() {
+    print("Hello World!");
+}
+
+fun withReturningType(val:bool):bool {
+    return !val;
+}
+
+fun sum(num1: int, num2: int): int {
+    return num1 + num2
+}
+
+print(withReturningType(False))
+
+withoutArguments()

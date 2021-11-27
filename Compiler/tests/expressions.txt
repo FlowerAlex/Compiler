@@ -1,0 +1,24 @@
+fun abc(): bool{
+    return True;
+}
+
+a: bool = True || False;
+b: bool = !a;
+c: bool = a && b;
+d: bool = a || b;
+e: bool = (a || b) && !d;
+f1: bool = 5 < 6;
+f2: bool = 5 <= 6;
+f3: bool = 5 > 6;
+f4: bool = 5 >= 6;
+f5: bool = 5 == 5;
+f6: bool = 5 != 6;
+f7: bool = true || abc();
+
+num1: int = -5;
+num2: double = -0.05;
+num3: double = -5.5/3;
+num4: double = -5.5*3;
+num5: double = -5.5+3;
+num5: double = -5.5-3;
+
