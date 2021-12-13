@@ -1,10 +1,10 @@
-int a1 = 5;
-double b1 = 10.0;
-bool c1 = True;
-bool c2 = False;
+a1: int = 5;
+b1: double = 10.0;
+c1: bool = True;
+c2: bool = False;
 
-int a2;
-double b2;
-bool c3;
+a2: int;
+b2: double;
+c3: bool;
 
 b1 = a1;

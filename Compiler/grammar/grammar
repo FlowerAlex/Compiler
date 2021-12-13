@@ -1,24 +1,22 @@
 Program 
     : { Function } { (Instruction ';') | Statement } 
-    ; 
+    ;
 
 Function 
-    : 'fun' functionName  '(' [ ArgsDefList ] ')' [ ':' Type ] Block 
+    : 'fun' identifier  '(' [ ArgsDefList ] ')' [ ':' Type ] Block
     ; 
 
 ArgsDefList 
-    : argName ';' Type { ',' argName ';' Type }
+    : argName ':' Type { ',' argName ':' Type }
     ; 
 
 Block 
     : '{' { Instruction ';' | Statement } '}' 
     ; 
 
-Instruction 
-    : VariableDeclaration 
-    | VariableAssignment 
-    | FunctionCall 
-    | Return 
+Instruction
+    : identifier VariableAssignmentOrDeclarationOrFunctionCall
+    | Return
     ; 
 
 Statement 
@@ -45,7 +43,7 @@ NegativeExpression
     ; 
 
 RelationalExpression 
-    : AddSubExpression RelationalOperator RelationalExpression 
+    : AddSubExpression [RelationalOperator RelationalExpression]
     ; 
 
 RelationalOperator 
@@ -58,7 +56,7 @@ RelationalOperator
     ; 
 
 AddSubExpression 
-    : MulDivExpression AddSubOperator AddSubExpression 
+    : MulDivExpression [AddSubOperator AddSubExpression]
     ; 
 
 AddSubOperator 
@@ -84,29 +82,18 @@ PrimaryExpression
     | double  
     | bool 
     | '(' Expression ')'  
-    | FunctionCall 
-    | variableName
-    ; 
+    | identifier ['(' [ ArgsList ] ')']
+    ;
 
-VariableDeclaration 
-    : Type variableName 
-    | Type VariableAssignment 
-    ; 
-
-VariableAssignment 
-    : variableName '=' Expression 
-    ; 
-
-FunctionCall 
-    : functionName '(' [ ArgsList ] ')' 
-    ; 
+VariableAssignmentOrDeclarationOrFunctionCall
+    : ':' Type [ '=' Expression ]
+    | '=' Expression
+    | '(' [ ArgsList ] ')'
+    ;
 
 ArgsList 
-    : ArgsList ',' variableName 
-    | ArgsList ',' PrimaryExpression 
-    | variableName 
-    | PrimaryExpression 
-    ; 
+    : PrimaryExpression { ',' ArgsList }
+    ;
 
 Return 
     : 'return' Expression

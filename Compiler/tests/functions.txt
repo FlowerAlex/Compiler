@@ -9,9 +9,9 @@ fun withReturningType(val:bool):bool {
 }
 
 fun sum(num1: int, num2: int): int {
-    return num1 + num2
+    return num1 + num2;
 }
 
-print(withReturningType(False))
+print(withReturningType(False));
 
-withoutArguments()
+withoutArguments();
