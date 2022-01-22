@@ -53,7 +53,7 @@ class Return(
 ) : Instruction()
 
 class FunctionArgument(
-    val primaryExpression: PrimaryExpression,
+    val primaryExpression: Expression,
 )
 open class Statement : Operation() // Statement
 
@@ -68,15 +68,11 @@ class WhileStatement(
     val ifTrue: Block,
 ) : Statement()
 
-class Expression(
-    val logicalExpression: LogicalExpression,
-) : PrimaryExpression()
-
 class LogicalExpression(
-    val negativeExpression: NegativeExpression,
-    val logicalOperator: LogicalOperator?,
-    val logicalExspression: LogicalExpression?,
-) : PrimaryExpression()
+    val leftExpression: Expression,
+    val logicalOperator: LogicalOperator,
+    val rightExpression: Expression,
+) : Expression()
 
 enum class LogicalOperator{
     AND,
@@ -84,15 +80,14 @@ enum class LogicalOperator{
 }
 
 class NegativeExpression(
-    val isNegative: Boolean,
-    val relationalExpression: RelationalExpression,
-)
+    val expression: Expression,
+):Expression()
 
 class RelationalExpression(
-    val addSubExpression: AddSubExpression,
-    val relationalOperator: RelationalOperator?,
-    val relationalExpression: RelationalExpression?,
-)
+    val leftExpression: Expression,
+    val relationalOperator: RelationalOperator,
+    val rightExpression: Expression,
+):Expression()
 
 enum class RelationalOperator{
     EQUAL,
@@ -104,10 +99,10 @@ enum class RelationalOperator{
 }
 
 class AddSubExpression(
-    val mulDivExpression: MulDivExpression,
-    val addSubOperator: AddSubOperator?,
-    val addSubExpression: AddSubExpression?,
-)
+    val leftExpression: Expression,
+    val addSubOperator: AddSubOperator,
+    val rightExpression: Expression,
+):Expression()
 
 enum class AddSubOperator{
     PLUS,
@@ -115,10 +110,10 @@ enum class AddSubOperator{
 }
 
 class MulDivExpression(
-    val unaryExpression: UnaryExpression,
-    val mulDivOperator: MulDivOperator?,
-    val mulDivExpression: MulDivExpression?,
-)
+    val leftExpression: Expression,
+    val mulDivOperator: MulDivOperator,
+    val rightExpression: Expression,
+):Expression()
 
 enum class MulDivOperator{
     MULTIPLY,
@@ -126,32 +121,31 @@ enum class MulDivOperator{
 }
 
 class UnaryExpression(
-    val withUnaryOperator: Boolean,
-    val primaryExpression: PrimaryExpression,
-)
+    val expression: Expression,
+):Expression()
 
-abstract class PrimaryExpression
+abstract class Expression
 
 class IntValue(
     val value: Int,
-): PrimaryExpression()
+): Expression()
 
 class DoubleValue(
     val value: Double,
-): PrimaryExpression()
+): Expression()
 
 class BoolValue(
     val value: Boolean,
-): PrimaryExpression()
+): Expression()
 
 class TextValue(
     val value: String,
-): PrimaryExpression()
+): Expression()
 
 class VariableExpression(
     val identifier: String,
-): PrimaryExpression()
+): Expression()
 
 class FunctionCallExpression(
     val functionCall: FunctionCall,
-): PrimaryExpression()
+): Expression()

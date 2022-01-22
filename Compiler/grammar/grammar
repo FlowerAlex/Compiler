@@ -43,7 +43,7 @@ NegativeExpression
     ; 
 
 RelationalExpression 
-    : AddSubExpression [RelationalOperator RelationalExpression]
+    : AddSubExpression [ RelationalOperator RelationalExpression ]
     ; 
 
 RelationalOperator 
@@ -56,7 +56,7 @@ RelationalOperator
     ; 
 
 AddSubExpression 
-    : MulDivExpression [AddSubOperator AddSubExpression]
+    : MulDivExpression [ AddSubOperator AddSubExpression ]
     ; 
 
 AddSubOperator 
