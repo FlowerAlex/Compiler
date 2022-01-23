@@ -1,5 +1,13 @@
 package parser
 
+import nodes.*
+import nodes.Function
+import nodes.expressions.*
+import nodes.expressions.operators.AddSubOperator
+import nodes.expressions.operators.LogicalOperator
+import nodes.expressions.operators.MulDivOperator
+import nodes.expressions.operators.RelationalOperator
+import nodes.operations.*
 import scanner.IScanner
 import token.Token
 import token.TokenType
@@ -14,7 +22,7 @@ class Parser(
         return buildRootNode()
     }
 
-    private fun buildRootNode(): RootNode{
+    private fun buildRootNode(): RootNode {
         currentToken = scanner.getNextToken()
 
         val functions = buildFunctionsNode()
@@ -26,7 +34,7 @@ class Parser(
     private fun buildFunctionsNode(): MutableList<Function>{
         val functions = mutableListOf<Function>()
 
-        var functionNode :Function? = buildFunctionNode()
+        var functionNode : Function? = buildFunctionNode()
         while (functionNode != null){
             functions.add(functionNode)
             functionNode = buildFunctionNode()
@@ -67,7 +75,7 @@ class Parser(
         expect(TokenType.RIGHT_CURLY_BRACKET)
         currentToken = scanner.getNextToken()
 
-        return Function(identifier,argsDefList,returnType,Block(operations))
+        return Function(identifier,argsDefList,returnType, Block(operations))
     }
 
     private fun buildOperationsNode(): MutableList<Operation>{
@@ -85,7 +93,7 @@ class Parser(
                 }
                 TokenType.RETURN -> {
                     currentToken = scanner.getNextToken()
-                    operations.add(Return(buildExpression()))
+                    operations.add(ReturnExpression(buildExpression()))
 
                     expect(TokenType.SEMICOLON)
                     currentToken = scanner.getNextToken()
@@ -102,7 +110,7 @@ class Parser(
         return operations
     }
 
-    private fun buildWhileStatement():WhileStatement{
+    private fun buildWhileStatement(): WhileStatement {
         expect(TokenType.WHILE)
         currentToken = scanner.getNextToken()
 
@@ -122,10 +130,10 @@ class Parser(
         expect(TokenType.RIGHT_CURLY_BRACKET)
         currentToken = scanner.getNextToken()
 
-        return WhileStatement(condition,Block(operationsForTrue))
+        return WhileStatement(condition, Block(operationsForTrue))
     }
 
-    private fun buildIfStatement():IfStatement{
+    private fun buildIfStatement(): IfStatement {
         expect(TokenType.IF)
         currentToken = scanner.getNextToken()
 
@@ -158,13 +166,13 @@ class Parser(
         }
 
         return if(operationsForFalse != null){
-            IfStatement(condition,Block(operationsForTrue),Block(operationsForFalse))
+            IfStatement(condition, Block(operationsForTrue), Block(operationsForFalse))
         }else{
-            IfStatement(condition,Block(operationsForTrue),null)
+            IfStatement(condition, Block(operationsForTrue),null)
         }
     }
 
-    private fun buildVariableAssignmentOrDeclarationOrFunctionCall(identifier: String) : Operation{
+    private fun buildVariableAssignmentOrDeclarationOrFunctionCall(identifier: String) : Operation {
         when (currentToken?.tokenType){
             TokenType.COLON -> {
                 val type = buildColonWithType()
@@ -209,7 +217,7 @@ class Parser(
         return argsDefinitionList
     }
 
-    private fun buildColonWithType(): Type{
+    private fun buildColonWithType(): Type {
         var returnType: Type? = null
         if(currentToken?.tokenType == TokenType.COLON){
             currentToken = scanner.getNextToken()
@@ -306,7 +314,7 @@ class Parser(
         return null
     }
 
-    private fun buildAddSubExpression():Expression?{
+    private fun buildAddSubExpression(): Expression?{
         val mulDivExpression = buildMulDivExpression()
 
         val addSubOperator = when (currentToken?.tokenType) {

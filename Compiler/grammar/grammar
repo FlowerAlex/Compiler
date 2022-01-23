@@ -1,5 +1,10 @@
 Program 
-    : { Function } { (Instruction ';') | Statement } 
+    : { Function } { Operation }
+    ;
+
+Operation
+    : Instruction ';'
+    | Statement
     ;
 
 Function 
