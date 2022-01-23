@@ -7,9 +7,9 @@ import nodes.operations.Operation
 class RootNode( // Program
     val functions:MutableList<Function>,
     val operations: MutableList<Operation>,
+    override var pos: Pair<Int,Int>,
 ):INode {
     override fun accept(nodeVisitor: INodeVisitor):ExpressionResult? {
-        nodeVisitor.visit(this)
-        return null
+        return nodeVisitor.visit(this)
     }
 }

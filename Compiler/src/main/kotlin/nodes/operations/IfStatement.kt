@@ -9,9 +9,9 @@ class IfStatement(
     val condition: Expression,
     val ifTrue: Block,
     val ifElse: Block?,
+    override var pos: Pair<Int,Int>,
 ) : Statement() {
     override fun accept(nodeVisitor: INodeVisitor): ExpressionResult? {
-        nodeVisitor.visit(this)
-        return null
+        return nodeVisitor.visit(this)
     }
 }

@@ -13,12 +13,35 @@ f3: bool = 5 > 6;
 f4: bool = 5 >= 6;
 f5: bool = 5 == 5;
 f6: bool = 5 != 6;
-f7: bool = true || abc();
+f7: bool = f6 || abc();
+
+print("f1:");
+print(f1);
+print("\n");
+
+print("f2:");
+print(f2);
+print("\n");
+
+print("f7:");
+print(f7);
+print("\n");
 
 num1: int = -5;
 num2: double = -0.05;
 num3: double = -5.5/3;
-num4: double = -5.5*3;
+num4: double = 5.5*3;
 num5: double = -5.5+3;
-num5: double = -5.5-3;
+num6: double = -5.5-3;
 
+print("num3:");
+print(num3);
+print("\n");
+
+print("num4:");
+print(num4);
+print("\n");
+
+print("num6:");
+print(num6);
+print("\n");

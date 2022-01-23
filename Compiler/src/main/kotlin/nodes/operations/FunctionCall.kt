@@ -7,6 +7,7 @@ import nodes.FunctionArgument
 class FunctionCall(
     val identifier: String,
     val args: MutableList<FunctionArgument>,
+    override var pos: Pair<Int,Int>,
 ) : Instruction() {
     override fun accept(nodeVisitor: INodeVisitor): ExpressionResult? {
         return nodeVisitor.visit(this)

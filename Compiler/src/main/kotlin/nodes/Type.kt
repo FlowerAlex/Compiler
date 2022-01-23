@@ -4,6 +4,7 @@ enum class Type {
     INT,
     DOUBLE,
     BOOL,
-    STRING
+    STRING,
+    ANY
 }
 

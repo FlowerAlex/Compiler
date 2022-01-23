@@ -8,6 +8,7 @@ class AddSubExpression(
     val leftExpression: Expression,
     val addSubOperator: AddSubOperator,
     val rightExpression: Expression,
+    override var pos: Pair<Int,Int>,
 ): Expression() {
     override fun accept(nodeVisitor: INodeVisitor): ExpressionResult {
         return nodeVisitor.visit(this)

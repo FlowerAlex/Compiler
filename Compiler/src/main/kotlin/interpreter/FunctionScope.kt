@@ -1,3 +1,3 @@
 package interpreter
 
-class FunctionScope(val variableDataContexts: MutableList<VariableDataContext>)
+class FunctionScope(val variableDataContexts: MutableList<VariableDataContext> = mutableListOf())

@@ -28,7 +28,7 @@ class Parser(
         val functions = buildFunctionsNode()
         val operations = buildOperationsNode()
 
-        return  RootNode(functions,operations)
+        return  RootNode(functions,operations,scanner.getTokenPosition())
     }
 
     private fun buildFunctionsNode(): MutableList<Function>{
@@ -75,7 +75,7 @@ class Parser(
         expect(TokenType.RIGHT_CURLY_BRACKET)
         currentToken = scanner.getNextToken()
 
-        return Function(identifier,argsDefList,returnType, Block(operations))
+        return Function(identifier,argsDefList,returnType, Block(operations,scanner.getTokenPosition()), scanner.getTokenPosition())
     }
 
     private fun buildOperationsNode(): MutableList<Operation>{
@@ -93,7 +93,7 @@ class Parser(
                 }
                 TokenType.RETURN -> {
                     currentToken = scanner.getNextToken()
-                    operations.add(ReturnExpression(buildExpression()))
+                    operations.add(ReturnExpression(buildExpression(),scanner.getTokenPosition()))
 
                     expect(TokenType.SEMICOLON)
                     currentToken = scanner.getNextToken()
@@ -130,7 +130,7 @@ class Parser(
         expect(TokenType.RIGHT_CURLY_BRACKET)
         currentToken = scanner.getNextToken()
 
-        return WhileStatement(condition, Block(operationsForTrue))
+        return WhileStatement(condition, Block(operationsForTrue,scanner.getTokenPosition()),scanner.getTokenPosition())
     }
 
     private fun buildIfStatement(): IfStatement {
@@ -166,9 +166,9 @@ class Parser(
         }
 
         return if(operationsForFalse != null){
-            IfStatement(condition, Block(operationsForTrue), Block(operationsForFalse))
+            IfStatement(condition, Block(operationsForTrue,scanner.getTokenPosition()), Block(operationsForFalse,scanner.getTokenPosition()),scanner.getTokenPosition())
         }else{
-            IfStatement(condition, Block(operationsForTrue),null)
+            IfStatement(condition, Block(operationsForTrue,scanner.getTokenPosition()),null,scanner.getTokenPosition())
         }
     }
 
@@ -178,14 +178,14 @@ class Parser(
                 val type = buildColonWithType()
                 return if (currentToken?.tokenType == TokenType.ASSIGN){
                     currentToken = scanner.getNextToken()
-                    VariableDeclaration(identifier,type,buildExpression())
+                    VariableDeclaration(identifier,type,buildExpression(),scanner.getTokenPosition())
                 }else{
-                    VariableDeclaration(identifier,type,null)
+                    VariableDeclaration(identifier,type,null,scanner.getTokenPosition())
                 }
             }
             TokenType.ASSIGN -> {
                 currentToken = scanner.getNextToken()
-                return VariableAssignment(identifier,buildExpression())
+                return VariableAssignment(identifier,buildExpression(),scanner.getTokenPosition())
             }
             TokenType.LEFT_ROUND_BRACKET ->{
                 currentToken = scanner.getNextToken()
@@ -193,7 +193,7 @@ class Parser(
                 expect(TokenType.RIGHT_ROUND_BRACKET)
                 currentToken = scanner.getNextToken()
 
-                return FunctionCall(identifier,argsList)
+                return FunctionCall(identifier,argsList,scanner.getTokenPosition())
             }
             else -> throw Exception("Unexpected behaviour")
         }
@@ -259,7 +259,7 @@ class Parser(
 
         if(negativeExpression !=null){
             return if(logicalOperator != null && logicalExpression != null){
-                LogicalExpression(negativeExpression,logicalOperator,logicalExpression)
+                LogicalExpression(negativeExpression,logicalOperator,logicalExpression,scanner.getTokenPosition())
             }else {
                 negativeExpression
             }
@@ -277,7 +277,7 @@ class Parser(
 
         if(relationalExpression != null){
             return if(isExclamationMark){
-                NegativeExpression(relationalExpression)
+                NegativeExpression(relationalExpression,scanner.getTokenPosition())
             } else {
                 relationalExpression
             }
@@ -306,7 +306,7 @@ class Parser(
 
         if(addSubExpression !=null){
             return if(relationalOperator != null && relationalExpression != null){
-                RelationalExpression(addSubExpression,relationalOperator,relationalExpression)
+                RelationalExpression(addSubExpression,relationalOperator,relationalExpression,scanner.getTokenPosition())
             }else {
                 addSubExpression
             }
@@ -330,7 +330,7 @@ class Parser(
 
         if(mulDivExpression !=null){
             return if(addSubOperator != null && addSubExpression != null){
-                 AddSubExpression(mulDivExpression,addSubOperator,addSubExpression)
+                 AddSubExpression(mulDivExpression,addSubOperator,addSubExpression,scanner.getTokenPosition())
             }else {
                 mulDivExpression
             }
@@ -355,7 +355,7 @@ class Parser(
 
         if(unaryExpression !=null){
             return if(mulDivOperator != null && mulDivExpression != null){
-                MulDivExpression(unaryExpression,mulDivOperator,mulDivExpression)
+                MulDivExpression(unaryExpression,mulDivOperator,mulDivExpression,scanner.getTokenPosition())
             }else {
                 unaryExpression
             }
@@ -375,9 +375,9 @@ class Parser(
 
         if(primaryExpression != null){
             return if(isMinus){
-                UnaryExpression(primaryExpression)
+                UnaryExpression(primaryExpression,scanner.getTokenPosition())
             }else{
-                primaryExpression;
+                primaryExpression
             }
         }
         return null
@@ -386,27 +386,27 @@ class Parser(
     private fun buildPrimaryExpression(): Expression?{
         return when(currentToken?.tokenType){
             TokenType.VALUE_INT -> {
-                val intValue = IntValue(currentToken?.token as Int)
+                val intValue = IntValue(currentToken?.token as Int,scanner.getTokenPosition())
                 currentToken = scanner.getNextToken()
                 intValue
             }
             TokenType.VALUE_DOUBLE -> {
-                val doubleValue = DoubleValue(currentToken?.token as Double)
+                val doubleValue = DoubleValue(currentToken?.token as Double,scanner.getTokenPosition())
                 currentToken = scanner.getNextToken()
                 doubleValue
             }
             TokenType.TRUE -> {
-                val boolValue = BoolValue(true)
+                val boolValue = BoolValue(true,scanner.getTokenPosition())
                 currentToken = scanner.getNextToken()
                 boolValue
             }
             TokenType.TEXT -> {
-                val textValue = TextValue(currentToken?.token as String)
+                val textValue = TextValue(currentToken?.token as String,scanner.getTokenPosition())
                 currentToken = scanner.getNextToken()
                 textValue
             }
             TokenType.FALSE -> {
-                val boolValue = BoolValue(false)
+                val boolValue = BoolValue(false,scanner.getTokenPosition())
                 currentToken = scanner.getNextToken()
                 boolValue
             }
@@ -429,10 +429,10 @@ class Parser(
                     expect(TokenType.RIGHT_ROUND_BRACKET)
                     currentToken = scanner.getNextToken()
 
-                    return FunctionCallExpression(FunctionCall(identifier,argsList))
+                    return FunctionCallExpression(FunctionCall(identifier,argsList,scanner.getTokenPosition()),scanner.getTokenPosition())
                 }
 
-                return VariableExpression(identifier)
+                return VariableExpression(identifier,scanner.getTokenPosition())
             }
             else -> return null
         }
@@ -446,10 +446,9 @@ class Parser(
                 expect(TokenType.COMMA)
                 currentToken = scanner.getNextToken()
             }
-            val primaryExpression = buildPrimaryExpression()
-            if(primaryExpression != null){
-                functionArgumentList.add(FunctionArgument(primaryExpression))
-            }
+            val primaryExpression = buildExpression()
+
+            functionArgumentList.add(FunctionArgument(primaryExpression))
         }
 
         return functionArgumentList
@@ -457,7 +456,7 @@ class Parser(
 
     private fun expect(tokenType: TokenType){
         if(currentToken?.tokenType != tokenType){
-            throw Exception("Unexpected behaviour")
+            throw Exception("Unexpected behaviour. Position ${scanner.getTokenPosition()}")
         }
     }
 }

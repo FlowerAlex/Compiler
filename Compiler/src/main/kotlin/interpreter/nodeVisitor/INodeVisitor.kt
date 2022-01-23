@@ -26,18 +26,18 @@ interface INodeVisitor {
 
     // operations
     fun visit(operation: Operation): ExpressionResult?
-    fun visit(statement: Statement)
+    fun visit(statement: Statement): ExpressionResult?
     fun visit(instruction: Instruction): ExpressionResult?
 
     fun visit(functionCall: FunctionCall): ExpressionResult?
-    fun visit(ifStatement: IfStatement)
+    fun visit(ifStatement: IfStatement): ExpressionResult?
     fun visit(returnExpression: ReturnExpression):ExpressionResult
     fun visit(variableAssignment: VariableAssignment)
     fun visit(variableDeclaration: VariableDeclaration)
-    fun visit(whileStatement: WhileStatement)
+    fun visit(whileStatement: WhileStatement):ExpressionResult?
 
     // others
-    fun visit(rootNode: RootNode)
+    fun visit(rootNode: RootNode):ExpressionResult?
     fun visit(functionArgument: FunctionArgument): ExpressionResult
     fun visit(function: Function)
     fun visit(block: Block):ExpressionResult?

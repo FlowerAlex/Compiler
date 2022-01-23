@@ -1,9 +1,11 @@
 i: int = 0;
 while(i < 10){
     if(i <5){
-        print("i is small\n");
+        print(i);
+        print(" is small\n");
     }else{
-        print("i isn't small\n");
+        print(i);
+        print(" isn't small\n");
     }
     i = i+1;
 }

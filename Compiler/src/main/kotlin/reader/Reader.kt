@@ -2,17 +2,12 @@ package reader
 
 import java.io.BufferedReader
 
-class Reader(private val bufferedReader: BufferedReader) : IReader {
-    var currentChar: Int?
-    var currentLine: Int
-    var currentIndexInLine: Int
-
-    init {
-        currentChar = null
-        currentLine = 1
-        currentIndexInLine = 0
-    }
-
+class Reader(
+    private val bufferedReader: BufferedReader,
+    override var currentChar: Int? = null,
+    override var currentLine: Int = 1,
+    override var currentIndexInLine: Int = 0,
+) : IReader {
     override fun getNextChar(): Int {
         while(currentChar != -1 || currentChar == '\n'.code || currentChar == '\r'.code){
             currentIndexInLine++

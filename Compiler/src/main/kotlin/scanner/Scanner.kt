@@ -1,12 +1,12 @@
 package scanner
 
-import reader.Reader
+import reader.IReader
 import token.Token
 import token.TokenType
 import java.lang.Exception
 import kotlin.math.pow
 
-class Scanner(private val reader: Reader) : IScanner {
+class Scanner(private val reader: IReader) : IScanner {
     companion object{
         val SymbolicTokens = mapOf(
             "," to TokenType.COMMA,
@@ -43,6 +43,10 @@ class Scanner(private val reader: Reader) : IScanner {
              "True" to TokenType.TRUE,
              "False" to TokenType.FALSE,
          )
+    }
+
+    override fun getTokenPosition(): Pair<Int, Int> {
+        return Pair(reader.currentLine, reader.currentIndexInLine+1)
     }
 
     override fun getNextToken(): Token {
@@ -106,7 +110,7 @@ class Scanner(private val reader: Reader) : IScanner {
     }
 
     private fun recognizeSymbolicToken(currentToken: StringBuilder,pos: Pair<Int, Int>): Token? {
-        var nextChar = reader.peekNextChar().toChar()
+        val nextChar = reader.peekNextChar().toChar()
         var tokenType = SymbolicTokens[currentToken.toString() + nextChar]
         if(tokenType != null){
             reader.getNextChar()
@@ -121,13 +125,13 @@ class Scanner(private val reader: Reader) : IScanner {
     }
 
     private fun recognizeIntOrDouble(currentChar: Int,pos:Pair<Int,Int>): Token?{
-        var currentChar = currentChar
-        if(isDigit(currentChar)){
-            var res = currentChar -'0'.code
-            if(currentChar != '0'.code){
+        var tmpCurrentChar = currentChar
+        if(isDigit(tmpCurrentChar)){
+            var res = tmpCurrentChar -'0'.code
+            if(tmpCurrentChar != '0'.code){
                 while(isDigit(reader.peekNextChar())){
-                    currentChar = reader.getNextChar()
-                    res = 10*res + (currentChar -'0'.code)
+                    tmpCurrentChar = reader.getNextChar()
+                    res = 10*res + (tmpCurrentChar -'0'.code)
                 }
             }
 
@@ -199,15 +203,15 @@ class Scanner(private val reader: Reader) : IScanner {
     }
 
     private fun recognizeCommentOrDivide(currentChar: Int):Token? {
-        var currentChar = currentChar
+        var tmpCurrentChar = currentChar
         while (reader.currentChar == '/'.code){
             if(reader.peekNextChar() == '/'.code){
-                currentChar = reader.skipCommentsAndGetNextChar()
-                while (isWhiteSpaceOrNextLine(currentChar,reader.peekNextChar())){
-                    currentChar = reader.getNextChar()
+                tmpCurrentChar = reader.skipCommentsAndGetNextChar()
+                while (isWhiteSpaceOrNextLine(tmpCurrentChar,reader.peekNextChar())){
+                    tmpCurrentChar = reader.getNextChar()
                 }
             }else{
-                return Token(TokenType.DIVIDE,currentChar.toChar(), Pair(reader.currentLine,reader.currentIndexInLine))
+                return Token(TokenType.DIVIDE,tmpCurrentChar.toChar(), Pair(reader.currentLine,reader.currentIndexInLine))
             }
         }
         return null
