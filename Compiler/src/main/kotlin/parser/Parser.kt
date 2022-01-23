@@ -1,11 +1,19 @@
 package parser
 
-import scanner.Scanner
+import nodes.*
+import nodes.Function
+import nodes.expressions.*
+import nodes.expressions.operators.AddSubOperator
+import nodes.expressions.operators.LogicalOperator
+import nodes.expressions.operators.MulDivOperator
+import nodes.expressions.operators.RelationalOperator
+import nodes.operations.*
+import scanner.IScanner
 import token.Token
 import token.TokenType
 
 class Parser(
-    private val scanner: Scanner,
+    private val scanner: IScanner,
     ) :IParser{
 
     private var currentToken: Token? = null
@@ -14,7 +22,7 @@ class Parser(
         return buildRootNode()
     }
 
-    private fun buildRootNode(): RootNode{
+    private fun buildRootNode(): RootNode {
         currentToken = scanner.getNextToken()
 
         val functions = buildFunctionsNode()
@@ -23,42 +31,51 @@ class Parser(
         return  RootNode(functions,operations)
     }
 
-    private fun buildFunctionsNode(): MutableList<Function>{ // FIX!!!
+    private fun buildFunctionsNode(): MutableList<Function>{
         val functions = mutableListOf<Function>()
-        while (currentToken?.tokenType == TokenType.FUN){
 
-            currentToken = scanner.getNextToken()
-            expect(TokenType.IDENTIFIER)
-            val identifier = currentToken?.token.toString()
-
-            currentToken = scanner.getNextToken()
-            expect(TokenType.LEFT_ROUND_BRACKET)
-
-            currentToken = scanner.getNextToken()
-            val argsDefList = buildArgsDefinitionList()
-
-            expect(TokenType.RIGHT_ROUND_BRACKET)
-            currentToken = scanner.getNextToken()
-
-            var returnType: Type? = null
-            if(currentToken?.tokenType == TokenType.COLON){
-                returnType = buildColonWithType()
-            }
-
-            expect(TokenType.LEFT_CURLY_BRACKET)
-            currentToken = scanner.getNextToken()
-
-            var operations: MutableList<Operation> = mutableListOf()
-            if(currentToken?.tokenType != TokenType.RIGHT_CURLY_BRACKET){
-                operations = buildOperationsNode()
-            }
-
-            expect(TokenType.RIGHT_CURLY_BRACKET)
-            currentToken = scanner.getNextToken()
-
-            functions.add(Function(identifier,argsDefList,returnType,Block(operations)))
+        var functionNode : Function? = buildFunctionNode()
+        while (functionNode != null){
+            functions.add(functionNode)
+            functionNode = buildFunctionNode()
         }
-        return  functions
+        return functions
+    }
+
+    private fun buildFunctionNode(): Function?{
+        if(currentToken?.tokenType != TokenType.FUN){
+            return null
+        }
+        currentToken = scanner.getNextToken()
+        expect(TokenType.IDENTIFIER)
+        val identifier = currentToken?.token.toString()
+
+        currentToken = scanner.getNextToken()
+        expect(TokenType.LEFT_ROUND_BRACKET)
+
+        currentToken = scanner.getNextToken()
+        val argsDefList = buildArgsDefinitionList()
+
+        expect(TokenType.RIGHT_ROUND_BRACKET)
+        currentToken = scanner.getNextToken()
+
+        var returnType: Type? = null
+        if(currentToken?.tokenType == TokenType.COLON){
+            returnType = buildColonWithType()
+        }
+
+        expect(TokenType.LEFT_CURLY_BRACKET)
+        currentToken = scanner.getNextToken()
+
+        var operations: MutableList<Operation> = mutableListOf()
+        if(currentToken?.tokenType != TokenType.RIGHT_CURLY_BRACKET){
+            operations = buildOperationsNode()
+        }
+
+        expect(TokenType.RIGHT_CURLY_BRACKET)
+        currentToken = scanner.getNextToken()
+
+        return Function(identifier,argsDefList,returnType, Block(operations))
     }
 
     private fun buildOperationsNode(): MutableList<Operation>{
@@ -76,17 +93,15 @@ class Parser(
                 }
                 TokenType.RETURN -> {
                     currentToken = scanner.getNextToken()
-                    operations.add(Return(Expression(buildExpression())))
+                    operations.add(ReturnExpression(buildExpression()))
 
                     expect(TokenType.SEMICOLON)
                     currentToken = scanner.getNextToken()
                 }
                 TokenType.IF -> {
-                    currentToken = scanner.getNextToken()
                     operations.add(buildIfStatement())
                 }
                 TokenType.WHILE -> {
-                    currentToken = scanner.getNextToken()
                     operations.add(buildWhileStatement())
                 }
                 else -> throw Exception("Unexpected behaviour")
@@ -95,7 +110,10 @@ class Parser(
         return operations
     }
 
-    private fun buildWhileStatement():WhileStatement{
+    private fun buildWhileStatement(): WhileStatement {
+        expect(TokenType.WHILE)
+        currentToken = scanner.getNextToken()
+
         expect(TokenType.LEFT_ROUND_BRACKET)
         currentToken = scanner.getNextToken()
 
@@ -112,10 +130,13 @@ class Parser(
         expect(TokenType.RIGHT_CURLY_BRACKET)
         currentToken = scanner.getNextToken()
 
-        return WhileStatement(Expression(condition),Block(operationsForTrue))
+        return WhileStatement(condition, Block(operationsForTrue))
     }
 
-    private fun buildIfStatement():IfStatement{
+    private fun buildIfStatement(): IfStatement {
+        expect(TokenType.IF)
+        currentToken = scanner.getNextToken()
+
         expect(TokenType.LEFT_ROUND_BRACKET)
         currentToken = scanner.getNextToken()
 
@@ -145,26 +166,26 @@ class Parser(
         }
 
         return if(operationsForFalse != null){
-            IfStatement(Expression(condition),Block(operationsForTrue),Block(operationsForFalse))
+            IfStatement(condition, Block(operationsForTrue), Block(operationsForFalse))
         }else{
-            IfStatement(Expression(condition),Block(operationsForTrue),null)
+            IfStatement(condition, Block(operationsForTrue),null)
         }
     }
 
-    private fun buildVariableAssignmentOrDeclarationOrFunctionCall(identifier: String) : Operation{
+    private fun buildVariableAssignmentOrDeclarationOrFunctionCall(identifier: String) : Operation {
         when (currentToken?.tokenType){
             TokenType.COLON -> {
                 val type = buildColonWithType()
                 return if (currentToken?.tokenType == TokenType.ASSIGN){
                     currentToken = scanner.getNextToken()
-                    VariableDeclaration(identifier,type,Expression(buildExpression()))
+                    VariableDeclaration(identifier,type,buildExpression())
                 }else{
                     VariableDeclaration(identifier,type,null)
                 }
             }
             TokenType.ASSIGN -> {
                 currentToken = scanner.getNextToken()
-                return VariableAssignment(identifier,Expression(buildExpression()))
+                return VariableAssignment(identifier,buildExpression())
             }
             TokenType.LEFT_ROUND_BRACKET ->{
                 currentToken = scanner.getNextToken()
@@ -178,7 +199,7 @@ class Parser(
         }
     }
 
-    private fun buildArgsDefinitionList(): MutableList<ArgumentDefinition>{
+    private fun buildArgsDefinitionList(): MutableList<ArgumentDefinition>{ //
         val argsDefinitionList = mutableListOf<ArgumentDefinition>()
         while (currentToken?.tokenType != TokenType.RIGHT_ROUND_BRACKET) {
             if(argsDefinitionList.size != 0){
@@ -196,7 +217,7 @@ class Parser(
         return argsDefinitionList
     }
 
-    private fun buildColonWithType(): Type{
+    private fun buildColonWithType(): Type {
         var returnType: Type? = null
         if(currentToken?.tokenType == TokenType.COLON){
             currentToken = scanner.getNextToken()
@@ -221,7 +242,7 @@ class Parser(
         return returnType!!
     }
 
-    private fun buildExpression(): LogicalExpression{
+    private fun buildExpression(): Expression { // if have nulls return NegativeExrpession
         val negativeExpression = buildNegativeExpression()
 
         val logicalOperator = when (currentToken?.tokenType) {
@@ -230,26 +251,41 @@ class Parser(
                 LogicalOperator.OR
             else -> null
         }
-        var logicalExpression: LogicalExpression? = null
+        var logicalExpression: Expression? = null
         if(logicalOperator != null){
             currentToken = scanner.getNextToken()
             logicalExpression = buildExpression()
         }
 
-        return LogicalExpression(negativeExpression,logicalOperator,logicalExpression)
+        if(negativeExpression !=null){
+            return if(logicalOperator != null && logicalExpression != null){
+                LogicalExpression(negativeExpression,logicalOperator,logicalExpression)
+            }else {
+                negativeExpression
+            }
+        }
+        throw Exception("Unexpected behaviour")
     }
 
-    private fun buildNegativeExpression(): NegativeExpression{
+    private fun buildNegativeExpression(): Expression?{
         var isExclamationMark = false
         if(currentToken?.tokenType == TokenType.EXCLAMATION_MARK){
             isExclamationMark = true
             currentToken = scanner.getNextToken()
         }
+        val relationalExpression = buildRelationalExpression()
 
-        return NegativeExpression(isExclamationMark,buildRelationalExpression())
+        if(relationalExpression != null){
+            return if(isExclamationMark){
+                NegativeExpression(relationalExpression)
+            } else {
+                relationalExpression
+            }
+        }
+        return null
     }
 
-    private fun buildRelationalExpression(): RelationalExpression{
+    private fun buildRelationalExpression(): Expression?{
         val addSubExpression = buildAddSubExpression()
 
         val relationalOperator = when (currentToken?.tokenType) {
@@ -262,16 +298,23 @@ class Parser(
             TokenType.MORE_INCLUSIVE -> RelationalOperator.MORE_INCLUSIVE
             else -> null
         }
-        var relationalExpression: RelationalExpression? = null
+        var relationalExpression: Expression? = null
         if(relationalOperator != null){
             currentToken = scanner.getNextToken()
             relationalExpression = buildRelationalExpression()
         }
 
-        return RelationalExpression(addSubExpression,relationalOperator,relationalExpression)
+        if(addSubExpression !=null){
+            return if(relationalOperator != null && relationalExpression != null){
+                RelationalExpression(addSubExpression,relationalOperator,relationalExpression)
+            }else {
+                addSubExpression
+            }
+        }
+        return null
     }
 
-    private fun buildAddSubExpression():AddSubExpression{
+    private fun buildAddSubExpression(): Expression?{
         val mulDivExpression = buildMulDivExpression()
 
         val addSubOperator = when (currentToken?.tokenType) {
@@ -279,16 +322,24 @@ class Parser(
             TokenType.MINUS -> AddSubOperator.MINUS
             else -> null
         }
-        var addSubExpression: AddSubExpression? = null
+        var addSubExpression: Expression? = null
         if(addSubOperator != null){
             currentToken = scanner.getNextToken()
             addSubExpression = buildAddSubExpression()
         }
 
-        return AddSubExpression(mulDivExpression,addSubOperator,addSubExpression)
+        if(mulDivExpression !=null){
+            return if(addSubOperator != null && addSubExpression != null){
+                 AddSubExpression(mulDivExpression,addSubOperator,addSubExpression)
+            }else {
+                mulDivExpression
+            }
+
+        }
+        return null
     }
 
-    private fun buildMulDivExpression(): MulDivExpression{
+    private fun buildMulDivExpression(): Expression?{
         val unaryExpression = buildUnaryExpression()
 
         val mulDivOperator = when (currentToken?.tokenType) {
@@ -296,26 +347,43 @@ class Parser(
             TokenType.DIVIDE -> MulDivOperator.DIVIDE
             else -> null
         }
-        var mulDivExpression: MulDivExpression? = null
+        var mulDivExpression: Expression? = null
         if(mulDivOperator != null){
             currentToken = scanner.getNextToken()
             mulDivExpression = buildMulDivExpression()
         }
 
-        return MulDivExpression(unaryExpression,mulDivOperator,mulDivExpression)
+        if(unaryExpression !=null){
+            return if(mulDivOperator != null && mulDivExpression != null){
+                MulDivExpression(unaryExpression,mulDivOperator,mulDivExpression)
+            }else {
+                unaryExpression
+            }
+
+        }
+        return null
     }
 
-    private fun buildUnaryExpression(): UnaryExpression{
+    private fun buildUnaryExpression(): Expression?{
         var isMinus = false
         if(currentToken?.tokenType == TokenType.MINUS){
             isMinus = true
             currentToken = scanner.getNextToken()
         }
 
-        return UnaryExpression(isMinus,buildPrimaryExpression())
+        val primaryExpression = buildPrimaryExpression()
+
+        if(primaryExpression != null){
+            return if(isMinus){
+                UnaryExpression(primaryExpression)
+            }else{
+                primaryExpression;
+            }
+        }
+        return null
     }
 
-    private fun buildPrimaryExpression(): PrimaryExpression{
+    private fun buildPrimaryExpression(): Expression?{
         return when(currentToken?.tokenType){
             TokenType.VALUE_INT -> {
                 val intValue = IntValue(currentToken?.token as Int)
@@ -366,7 +434,7 @@ class Parser(
 
                 return VariableExpression(identifier)
             }
-            else -> throw Exception("Unexpected behaviour")
+            else -> return null
         }
     }
 
@@ -378,7 +446,10 @@ class Parser(
                 expect(TokenType.COMMA)
                 currentToken = scanner.getNextToken()
             }
-            functionArgumentList.add(FunctionArgument(buildPrimaryExpression()))
+            val primaryExpression = buildPrimaryExpression()
+            if(primaryExpression != null){
+                functionArgumentList.add(FunctionArgument(primaryExpression))
+            }
         }
 
         return functionArgumentList

@@ -1,5 +1,10 @@
 Program 
-    : { Function } { (Instruction ';') | Statement } 
+    : { Function } { Operation }
+    ;
+
+Operation
+    : Instruction ';'
+    | Statement
     ;
 
 Function 
@@ -43,7 +48,7 @@ NegativeExpression
     ; 
 
 RelationalExpression 
-    : AddSubExpression [RelationalOperator RelationalExpression]
+    : AddSubExpression [ RelationalOperator RelationalExpression ]
     ; 
 
 RelationalOperator 
@@ -56,7 +61,7 @@ RelationalOperator
     ; 
 
 AddSubExpression 
-    : MulDivExpression [AddSubOperator AddSubExpression]
+    : MulDivExpression [ AddSubOperator AddSubExpression ]
     ; 
 
 AddSubOperator 
